@@ -3,7 +3,7 @@ from http.server import BaseHTTPRequestHandler
 from os import getenv
 
 HOST = ""
-PORT = getenv("PORT", 80)
+PORT = int(getenv("PORT", "80"))
 
 class GridDudeRequestHandler(BaseHTTPRequestHandler):
     "Handles requests for both the website and the updates"
