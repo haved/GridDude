@@ -4,10 +4,14 @@
 		<title>Grid Dude viewer</title>
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<meta charset="UTF-8">
+		<script
+			src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+			integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+			crossorigin="anonymous"></script>
 	</head>
 	<body>
 		<div class="wholePage">
-			<div class="navBar">
+			<div class="navBar" id="navBar">
 				<a href="/"><h1>Grid Dude</h1></a>
 				<div class="flexPad"></div>
 				<a href="about.html">About</a>
@@ -17,13 +21,9 @@
 				{}
 				<div class="flexPad"></div>
 			</div>
-			<div class="footer">
+			<div class="footer" id="footer">
 				Made by haved
 			</div>
 		</div>
-		<script>
-		 if(typeof start !== 'undefined')
-			 start();
-		</script>
 	</body>
 </html>

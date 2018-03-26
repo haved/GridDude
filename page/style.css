@@ -7,23 +7,32 @@ html, body {
 }
 
 .wholePage {
+	width: 90%;
 	min-height: 100%;
-	width: 60%;
 	margin: 0 auto;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
 
+@media(min-width: 50rem) {
+	.wholePage {
+		width: 60%;
+	}
+}
+
 .navBar {
 	flex-shrink: 0;
 
-	width: 100%;
-	display: flex;
-	align-items: flex-end;
+	width:100%;
+	box-sizing:border-box;
 	padding: 0 1rem;
 	border-bottom: 5px solid #888888;
 	margin: 3rem 0;
+
+
+	display: flex;
+	align-items: flex-end;
 	font-size: 1.4rem;
 }
 
@@ -47,6 +56,7 @@ html, body {
 .content {
 	width: 100%;
 	display: flex;
+	align-items: flex-start;
 }
 
 .footer {
