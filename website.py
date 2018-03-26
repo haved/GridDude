@@ -1,8 +1,9 @@
 from socketserver import ThreadingTCPServer
 from http.server import BaseHTTPRequestHandler
+from os import getenv
 
 HOST = ""
-PORT = 80
+PORT = getenv("PORT", 80)
 
 class GridDudeRequestHandler(BaseHTTPRequestHandler):
     "Handles requests for both the website and the updates"
