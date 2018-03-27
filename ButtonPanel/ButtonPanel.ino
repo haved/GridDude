@@ -126,6 +126,7 @@ void uploadPresses() {
   wifiSerial.print(Header_string);
   wifiSerial.write(&presses[0], pressedCount);
   wifiSerial.print("\r\n");
+  eatUntil("success\r\n", 20);
   endTCP();
   pressedCount = 0;
   turnLED(false);

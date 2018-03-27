@@ -101,12 +101,12 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         if False in [c in MOVE_CODES for c in update]:
             self.send_response(400)
             self.end_headers()
-            self.wfile.write("Bad data".encode('utf-8'))
+            self.wfile.write("Bad data\r\n".encode('utf-8'))
             return
 
         self.send_response(200, 'OK')
         self.end_headers()
-        self.wfile.write("success".encode('utf-8'))
+        self.wfile.write("success\r\n".encode('utf-8'))
 
         GRID_LOCK.acquire()
         try:
