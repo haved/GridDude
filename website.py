@@ -13,7 +13,7 @@ def makeDefaultGrid():
     size = int(getenv("DEFAULT_GRID_SIZE", "100"))
     GRID['width'], GRID['height'] = (size, size)
     GRID['data'] = [i for i in range(size*size)]
-    GRID['dude']=[0,0]
+    GRID['dude']=[size//2,size//2]
 
 def read_file(file_name):
     with open("page/"+file_name, "r") as file_handle:
@@ -39,9 +39,14 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write("404 page not found".encode('utf-8'))
 
+    def do_redirect(self, target):
+        self.send_response(301)
+        self.send_header('Location', target)
+        self.end_headers()
+
     def do_GET(self):
         self.protocol_version='HTTP/1.1'
-        if self.path == "/" or self.path == "index.html":
+        if self.path == "/" or self.path == "/index.html":
             self.output_page("grid.html")
         elif self.path == "/about.html":
             self.output_page("about.html")
@@ -51,6 +56,8 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
             self.output_resource("style.css", 'text/css')
         elif self.path == "/grid.json":
             self.output_gridData_json()
+        elif self.path == "/index" or self.path == "/about":
+            self.do_redirect(self.path+".html")
         else:
             self.output_404()
 
@@ -61,6 +68,18 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         if 'data' not in GRID:
             makeDefaultGrid()
         self.wfile.write(json.dumps(GRID).encode('utf-8'))
+
+    def update_grid(self):
+        self.send_response(200, 'OK')
+        self.send_header('Content-type', '')
+
+
+    def do_POST(self):
+        self.protocol_version='HTTP/1.1'
+        if self.path == "/update_grid":
+            self.update_grid()
+        else:
+            self.output_404()
 
 with ThreadingTCPServer((HOST, PORT), GridDudeRequestHandler) as httpd:
     print("Serving Grid Dude on port", PORT)
