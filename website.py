@@ -97,14 +97,12 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
             self.wfile.write("Bad data\r\n".encode('utf-8'))
-            print("bad data")
             return
 
         self.send_response(200, 'OK')
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write("success\r\n".encode('utf-8'))
-        print("success")
 
         GRID_LOCK.acquire()
         if 'data' not in GRID:
