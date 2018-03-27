@@ -100,9 +100,7 @@ void sendTCP(String server, int port, int byteCount) {
 }
 
 void endTCP() {
-  eatUntil("SEND OK\r\n", 8);
-  wifiSerial.println("AT+CIPCLOSE");
-  eatOK();
+  wifiSerial.println("AT+CIPCLOSE"); //Will give ERROR, seing as we are already closed
 }
 
 const String POST_str = "POST /update_grid HTTP/1.1\r\n";
@@ -120,7 +118,9 @@ void uploadPresses() {
   wifiSerial.print("\r\n");
   wifiSerial.write(&presses[0], pressedCount);
   wifiSerial.setTimeout(10000);
+  eatUntil("SEND OK\r\n", 8);
   eatUntil("success", 20);
+  eatUntil("CLOSED", 15);
   wifiSerial.setTimeout(1000);
   endTCP();
   pressedCount = 0;
