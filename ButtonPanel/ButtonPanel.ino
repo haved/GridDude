@@ -119,13 +119,20 @@ void errorLoop(int blinks) {
 byte presses[256];
 int pressedCount = 0;
 
-String Header_string = "POST /update_grid HTTP/1.1\r\nHost:"+SERVER+"\r\n\r\n";
+const String POST_str = "POST /update_grid HTTP/1.1\r\n";
+const String HOST_str = "Host: "+SERVER+"\r\n";
+const String CON_LEN_str = "Content-length: ";
 void uploadPresses() {
   turnLED(true);
-  sendTCP(SERVER, PORT, Header_string.length() + pressedCount + 2);
-  wifiSerial.print(Header_string);
-  wifiSerial.write(&presses[0], pressedCount);
+  String len(pressedCount);
+  sendTCP(SERVER, PORT, POST_str.length()+HOST_str.length()+CON_LEN_str.length()+len.length()+2+2+pressedCount);
+  wifiSerial.print(POST_str);
+  wifiSerial.print(HOST_str);
+  wifiSerial.print(CON_LEN_str);
+  wifiSerial.print(len);
   wifiSerial.print("\r\n");
+  wifiSerial.print("\r\n");
+  wifiSerial.write(&presses[0], pressedCount);
   eatUntil("success\r\n", 20);
   endTCP();
   pressedCount = 0;
