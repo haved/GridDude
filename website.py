@@ -93,7 +93,9 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
             GRID_LOCK.release()
 
     def update_grid(self):
+        print("Before readline")
         update = self.rfile.readline()[:-1].decode('utf-8')
+        print("After readline:", update)
 
         self.send_header('Content-type', 'text/plain')
         if False in [c in MOVE_CODES for c in update]:

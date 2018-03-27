@@ -1,9 +1,9 @@
 #include <SoftwareSerial.h>
 #include "WIFI_Credentials.h"
 
-const int UP = 9;
-const int DOWN = 10;
-const int LEFT = 8;
+const int UP = 8;
+const int DOWN = 9;
+const int LEFT = 10;
 const int RIGHT = 11;
 const int LED_PIN = 12;
 
@@ -29,6 +29,18 @@ void setup() {
   while(!debugSerial); //Also wait
 
   connectToWifi();
+
+  turnLED(true);
+  delay(100);
+  turnLED(false);
+  delay(100);
+  turnLED(true);
+  delay(100);
+  turnLED(false);
+  delay(100);
+  turnLED(true);
+  delay(1000);
+  turnLED(false);
 }
 
 int waitReadWifi() {
@@ -107,11 +119,11 @@ void errorLoop(int blinks) {
 byte presses[256];
 int pressedCount = 0;
 
-String POST_string = "POST /update_grid HTTP/1.1\r\n";
+String Header_string = "POST /update_grid HTTP/1.1\r\nHost:"+SERVER+"\r\n\r\n";
 void uploadPresses() {
   turnLED(true);
-  sendTCP(SERVER, PORT, POST_string.length() + pressedCount + 2);
-  wifiSerial.print(POST_string);
+  sendTCP(SERVER, PORT, Header_string.length() + pressedCount + 2);
+  wifiSerial.print(Header_string);
   wifiSerial.write(&presses[0], pressedCount);
   wifiSerial.print("\r\n");
   endTCP();
