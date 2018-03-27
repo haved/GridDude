@@ -57,6 +57,7 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
     def output_gridData_json(self):
         self.send_response(200, 'OK')
         self.send_header('Content-type', 'application/json')
+        self.end_headers()
         if 'data' not in GRID:
             makeDefaultGrid()
         self.wfile.write(json.dumps(GRID).encode('utf-8'))
