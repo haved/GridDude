@@ -121,6 +121,59 @@ void connectToWifi() {
   debugOut.println("Connected to WiFi");
 }
 
+void sendTCP(String server, int port, int byteCount) {
+  wifiPrint("AT+CIPSTART=\"TCP\",\"");
+  wifiPrint(server);
+  wifiPrint("\",");
+  wifiPrintln(String(port));
+  collectButtonsUntil("CONNECT\r\n", 6000, 13);
+  collectButtonsUntil("OK\r\n", 6000, 12);
+  wifiPrint("AT+CIPSEND=");
+  wifiPrintln(String(byteCount));
+  collectButtonsUntil("OK\r\n", 6000, 11);
+}
+
+const String POST_str = "POST /update_grid HTTP/1.1\r\n";
+const String HOST_str = "Host: "+SERVER+"\r\n";
+const String CON_LEN_str = "Content-length: ";
+void uploadPresses() {
+  debugOut.println("Starting upload");
+  wifiIn.setTimeout(10);
+  turnLED(true);
+
+  int ps = pressedStart;
+  int pe = pressedEnd;
+  pressedStart = pressedEnd;
+
+  int pressCount = pe-ps;
+  if(pressCount < 0)
+    pressCount += pressBufferSize;
+  
+  String pressCount_str(pressCount);
+  sendTCP(SERVER, PORT, POST_str.length()+HOST_str.length()+CON_LEN_str.length()+pressCount_str.length()+2+2+pressCount);
+  wifiPrint(POST_str);
+  wifiPrint(HOST_str);
+  wifiPrint(CON_LEN_str);
+  wifiPrint(pressCount_str);
+  wifiPrint("\r\n");
+  wifiPrint("\r\n");
+
+  if(ps + pressCount > pressBufferSize) {
+    wifiWrite(&presses[ps], pressBufferSize-ps);
+    wifiWrite(&presses[0], pe);
+  } else {
+    wifiWrite(&presses[ps], pressCount);
+  }
+  
+  collectButtonsUntil("SEND OK\r\n", 10000, 8);
+  collectButtonsUntil("success", 10000, 20);
+  collectButtonsUntil("CLOSED", 10000, 15);
+  //wifiPrintln("AT+CIPCLOSE"); //We are already closed
+  turnLED(false);
+  wifiIn.setTimeout(1000);
+  debugOut.println("Upload finished");
+}
+
 const int timeBetweenChecks = 20;
 void collectButtonsFor(int mil) {
   while(mil > 0) {
@@ -151,6 +204,9 @@ void collectButtonsFor(int mil) {
   }
 }
 
+const int findBufferSize = 128;
+int findBufferIndex = 0;
+char findBuffer[findBufferSize];
 void collectButtonsUntil(String text, int timeout, int errorCode) {
   unsigned long keepTryingUntil = millis() + timeout;
   while(millis() < keepTryingUntil) {
@@ -161,58 +217,6 @@ void collectButtonsUntil(String text, int timeout, int errorCode) {
   debugOut.print("Timed out waiting on: ");
   debugOut.println(text);
   errorLoop(errorCode);
-}
-
-void sendTCP(String server, int port, int byteCount) {
-  wifiPrint("AT+CIPSTART=\"TCP\",\"");
-  wifiPrint(server);
-  wifiPrint("\",");
-  wifiPrintln(String(port));
-  collectButtonsUntil("CONNECT\r\n", 6000, 13);
-  collectButtonsUntil("OK\r\n", 6000, 12);
-  wifiPrint("AT+CIPSEND=");
-  wifiPrintln(String(byteCount));
-  collectButtonsUntil("OK\r\n", 6000, 11);
-}
-
-const String POST_str = "POST /update_grid HTTP/1.1\r\n";
-const String HOST_str = "Host: "+SERVER+"\r\n";
-const String CON_LEN_str = "Content-length: ";
-void uploadPresses() {
-  debugOut.println("Starting upload");
-  wifiIn.setTimeout(0);
-  turnLED(true);
-
-  int ps = pressedStart;
-  int pe = pressedEnd;
-  pressedStart = pressedEnd;
-
-  int pressCount = pe-ps;
-  if(pressCount < 0)
-    pressCount += pressBufferSize;
-  
-  String pressCount_str(pressCount);
-  sendTCP(SERVER, PORT, POST_str.length()+HOST_str.length()+CON_LEN_str.length()+pressCount_str.length()+2+2+pressCount);
-  wifiPrint(POST_str);
-  wifiPrint(HOST_str);
-  wifiPrint(CON_LEN_str);
-  wifiPrintln(pressCount_str);
-  wifiPrintln(""); //end of header
-
-  if(ps + pressCount > pressBufferSize) {
-    wifiWrite(&presses[ps], pressBufferSize-ps);
-    wifiWrite(&presses[0], pe);
-  } else {
-    wifiWrite(&presses[ps], pressCount);
-  }
-  
-  collectButtonsUntil("SEND OK\r\n", 10000, 8);
-  collectButtonsUntil("success\r\n", 10000, 20);
-  collectButtonsUntil("CLOSED", 10000, 15);
-  //wifiPrintln("AT+CIPCLOSE"); //We are already closed
-  turnLED(false);
-  wifiIn.setTimeout(1000);
-  debugOut.println("Upload finished");
 }
 
 void loop() {
