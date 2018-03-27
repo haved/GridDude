@@ -112,6 +112,8 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
                 move = MOVE_CODES[code]
                 new_dude_x = GRID['dude'][0] + move[0]
                 new_dude_y = GRID['dude'][1] + move[1]
+                new_dude_x %= GRID['width']
+                new_dude_y %= GRID['height']
                 index = getGridIndex(new_dude_x, new_dude_y)
                 GRID['dude'] = [new_dude_x, new_dude_y]
                 GRID['data'][index] += 1
