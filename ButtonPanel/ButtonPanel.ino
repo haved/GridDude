@@ -7,6 +7,9 @@ const int LEFT = 8;
 const int RIGHT = 11;
 const int LED_PIN = 12;
 
+String SERVER = "grid-dude.herokuapp.com";
+int PORT = 80;
+
 const int SOFT_RX=2, SOFT_TX=3;
 SoftwareSerial softSerial(SOFT_RX, SOFT_TX);
 #define wifiSerial Serial
@@ -35,19 +38,20 @@ int waitReadWifi() {
   return wifiSerial.read();
 }
 
-void eatUntil(String text) {
+void eatUntil(String text, int errorCode) {
   if(!wifiSerial.find(&text[0]))
-    errorLoop(10);
+    errorLoop(errorCode);
 }
 
-void eatOK() { eatUntil("OK\r\n"); }
+void eatOK() { eatUntil("OK\r\n", 10); }
 
 void connectToWifi() {
   debugSerial.print("Connecting to wifi: ");
+  Serial.setTimeout(1000);
   wifiSerial.println("AT"); //Just to get an OK
   eatOK();
   wifiSerial.println("AT+RST"); //Reset
-  eatUntil("ready\r\n");
+  eatUntil("ready\r\n", 11);
   wifiSerial.println("AT+CWMODE=1"); //Client mode (I think)
   eatOK();
   wifiSerial.println("AT+CWQAP"); //Forget wifi network
@@ -58,21 +62,31 @@ void connectToWifi() {
   wifiSerial.print(WIFI_PASSWD);
   wifiSerial.println("\"");
 
-  if(!wifiSerial.find("WIFI CONNECTED\r\n"))
-      errorLoop(3);
-  if(!wifiSerial.find("WIFI GOT IP\r\n"))
-      errorLoop(4);
-  eatOK();
+  Serial.setTimeout(10000);
+  eatUntil("WIFI CONNECTED\r\n", 3);
+  eatUntil("WIFI GOT IP\r\n", 4);
+  eatUntil("OK\r\n", 5);
+  Serial.setTimeout(1000);
   
   debugSerial.println("Connected to WiFi");
 }
 
-void sendHTTP(String server, int port) {
+void sendTCP(String server, int port, int byteCount) {
   wifiSerial.print("AT+CIPSTART=\"TCP\",\"");
   wifiSerial.print(server);
   wifiSerial.print("\",");
   wifiSerial.println(port);
-  
+  eatUntil("CONNECT\r\n", 13);
+  eatOK();
+  wifiSerial.print("AT+CIPSEND=");
+  wifiSerial.println(byteCount);
+  eatOK();
+}
+
+void endTCP() {
+  eatUntil("SEND OK\r\n", 8);
+  wifiSerial.println("AT+CIPCLOSE");
+  eatOK();
 }
 
 void turnLED(bool state) {
@@ -90,10 +104,26 @@ void errorLoop(int blinks) {
   }
 }
 
-void loop() {
+byte presses[256];
+int pressedCount = 0;
+
+String POST_string = "POST /update_grid HTTP/1.1\r\n";
+void uploadPresses() {
   turnLED(true);
-  delay(1000);
+  sendTCP(SERVER, PORT, POST_string.length() + pressedCount + 2);
+  wifiSerial.print(POST_string);
+  wifiSerial.write(&presses[0], pressedCount);
+  wifiSerial.print("\r\n");
+  endTCP();
+  pressedCount = 0;
   turnLED(false);
-  delay(1000);
+}
+
+void loop() {
+  delay(10000);
+  presses[0]='U';
+  presses[1]='L';
+  pressedCount = 2;
+  uploadPresses();
 }
 
