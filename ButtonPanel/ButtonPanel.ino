@@ -15,6 +15,9 @@ SoftwareSerial softSerial(SOFT_RX, SOFT_TX);
 #define wifiSerial Serial
 #define debugSerial softSerial
 
+byte presses[256];
+int pressedCount = 0;
+
 void setup() {
 	pinMode(UP, OUTPUT);
   pinMode(DOWN, OUTPUT);
@@ -28,6 +31,7 @@ void setup() {
   debugSerial.begin(115200);
   while(!debugSerial); //Also wait
 
+  pressedCount = 0;
   connectToWifi();
 
   turnLED(true);
@@ -101,9 +105,6 @@ void endTCP() {
   eatOK();
 }
 
-byte presses[256];
-int pressedCount = 0;
-
 const String POST_str = "POST /update_grid HTTP/1.1\r\n";
 const String HOST_str = "Host: "+SERVER+"\r\n";
 const String CON_LEN_str = "Content-length: ";
@@ -118,6 +119,9 @@ void uploadPresses() {
   wifiSerial.print("\r\n");
   wifiSerial.print("\r\n");
   wifiSerial.write(&presses[0], pressedCount);
+  wifiSerial.setTimeout(10000);
+  eatUntil("success", 20);
+  wifiSerial.setTimeout(1000);
   endTCP();
   pressedCount = 0;
   turnLED(false);
