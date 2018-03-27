@@ -90,16 +90,17 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
 
     def update_grid(self):
         length = int(self.headers['Content-length'])
-        update = self.rfile.read(length).decode('utf-8')
+        update = self.rfile.read(length).decode('utf-8').split()[0]
 
-        self.send_header('Content-type', 'text/plain')
         if False in [c in MOVE_CODES for c in update]:
             self.send_response(400)
+            self.send_header('Content-type', 'text/plain')
             self.end_headers()
             self.wfile.write("Bad data\r\n".encode('utf-8'))
             return
 
         self.send_response(200, 'OK')
+        self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write("success\r\n".encode('utf-8'))
 

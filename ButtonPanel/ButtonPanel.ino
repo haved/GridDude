@@ -101,21 +101,6 @@ void endTCP() {
   eatOK();
 }
 
-void turnLED(bool state) {
-  digitalWrite(LED_PIN, state?HIGH:LOW);
-}
-
-void errorLoop(int blinks) {
-  for(int i = 0;;i++) {
-    turnLED(true);
-    delay(200);
-    turnLED(false);
-    delay(200);
-    if(i%blinks==0)
-      delay(1000);
-  }
-}
-
 byte presses[256];
 int pressedCount = 0;
 
@@ -146,3 +131,17 @@ void loop() {
   uploadPresses();
 }
 
+void turnLED(bool state) {
+  digitalWrite(LED_PIN, state?HIGH:LOW);
+}
+
+void errorLoop(int blinks) {
+  for(int i = 0;;i++) {
+    turnLED(true);
+    delay(200);
+    turnLED(false);
+    delay(200);
+    if(i%blinks==0)
+      delay(1000);
+  }
+}
