@@ -121,6 +121,48 @@ void connectToWifi() {
   debugOut.println("Connected to WiFi");
 }
 
+const int timeBetweenChecks = 20;
+void collectButtonsFor(int mil) {
+  while(mil > 0) {
+    static bool prevUp = false, prevDown = false, prevLeft = false, prevRight = false;
+    bool up = digitalRead(UP), down = digitalRead(DOWN), left = digitalRead(LEFT), right = digitalRead(RIGHT);
+
+    if(up && !prevUp) {
+      presses[pressedEnd++] = 'U';
+      pressedEnd%=pressBufferSize;
+    }
+    if(down && !prevDown) {
+      presses[pressedEnd++] = 'D';
+      pressedEnd%=pressBufferSize;
+    }
+    if(left && !prevLeft) {
+      presses[pressedEnd++] = 'L';
+      pressedEnd%=pressBufferSize;
+    }
+    if(right && !prevRight) {
+      presses[pressedEnd++] = 'R';
+      pressedEnd%=pressBufferSize;
+    }
+    
+    prevUp = up; prevDown = down; prevLeft = left; prevRight = right;
+
+    delay(timeBetweenChecks);
+    mil-=timeBetweenChecks;
+  }
+}
+
+void collectButtonsUntil(String text, int timeout, int errorCode) {
+  unsigned long keepTryingUntil = millis() + timeout;
+  while(millis() < keepTryingUntil) {
+     if(wifiIn.find(&text[0]))
+        return;
+     collectButtonsFor(1);
+  }
+  debugOut.print("Timed out waiting on: ");
+  debugOut.println(text);
+  errorLoop(errorCode);
+}
+
 void sendTCP(String server, int port, int byteCount) {
   wifiPrint("AT+CIPSTART=\"TCP\",\"");
   wifiPrint(server);
@@ -171,48 +213,6 @@ void uploadPresses() {
   turnLED(false);
   wifiIn.setTimeout(1000);
   debugOut.println("Upload finished");
-}
-
-const int timeBetweenChecks = 20;
-void collectButtonsFor(int mil) {
-  while(mil > 0) {
-    static bool prevUp = false, prevDown = false, prevLeft = false, prevRight = false;
-    bool up = digitalRead(UP), down = digitalRead(DOWN), left = digitalRead(LEFT), right = digitalRead(RIGHT);
-
-    if(up && !prevUp) {
-      presses[pressedEnd++] = 'U';
-      pressedEnd%=pressBufferSize;
-    }
-    if(down && !prevDown) {
-      presses[pressedEnd++] = 'D';
-      pressedEnd%=pressBufferSize;
-    }
-    if(left && !prevLeft) {
-      presses[pressedEnd++] = 'L';
-      pressedEnd%=pressBufferSize;
-    }
-    if(right && !prevRight) {
-      presses[pressedEnd++] = 'R';
-      pressedEnd%=pressBufferSize;
-    }
-    
-    prevUp = up; prevDown = down; prevLeft = left; prevRight = right;
-
-    delay(timeBetweenChecks);
-    mil-=timeBetweenChecks;
-  }
-}
-
-void collectButtonsUntil(String text, int timeout, int errorCode) {
-  unsigned long keepTryingUntil = millis() + timeout;
-  while(millis() < keepTryingUntil) {
-     if(wifiIn.find(&text[0]))
-        return;
-     collectButtonsFor(1);
-  }
-  debugOut.print("Timed out waiting on: ");
-  debugOut.println(text);
-  errorLoop(errorCode);
 }
 
 void loop() {
