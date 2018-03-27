@@ -13,12 +13,9 @@ function fixSize(ctx) {
 }
 
 let loading = false;
-let gridData = null;
-let gridWidth = 0;
-let gridHeight = 0;
+
+let grid = null;
 let highestGridVal = 0;
-let dudeX = 0;
-let dudeY = 0;
 
 function animateLoading(ctx, theta) {
 
@@ -50,7 +47,7 @@ function drawGrid(ctx) {
 	if(loading)
 		return;
 
-	if(gridData === null) {
+	if(grid === null) {
 		loadGridData();
 		animateLoading(ctx, 0);
 		return;
@@ -59,10 +56,12 @@ function drawGrid(ctx) {
 		ctx.fillStyle="#EEEEEE";
 		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+		const gridWidth = grid['width'];
+		const gridHeight = grid['height'];
 		for(let x = 0; x < gridWidth; x++) {
 			for(let y = 0; y < gridHeight; y++) {
 				const index = x+y*gridWidth;
-				const data = gridData[index];
+				const data = grid['data'][index];
 				const color = data > 0 ? (data/highestGridVal*0.8)+0.2 : 0.0;
 
 				ctx.fillStyle = `rgba(${0x45}, ${0x27}, ${0xA0}, ${color})`;
@@ -91,21 +90,19 @@ function drawGrid(ctx) {
 
 function loadGridData() {
 	loading = true;
-	gridWidth = 64;
-	gridHeight = 64;
-	gridData=[];
-	for(let i = 0; i < gridWidth*gridHeight; i++) {
-		gridData[i]=i;
-	}
-	dudeX = 20;
-	dudeY = 20;
-	highestGridVal = 64*64;
-	loading = false;
+	$.getJSON("grid.json").done(( data )=> {
+		grid = data;
+		highestGridVal = Math.max(...grid['data']);
+		loading = false;
+	}).fail(()=>{
+		alert("Failed getting data from server, trying again in 5 seconds");
+		setTimeout(loadGridData, 5000);
+	});
 }
 
 const ctx = document.getElementById("dude_grid").getContext("2d");
 function refresh() {
-	gridData = null;
+	grid = null;
 	drawGrid(ctx);
 }
 

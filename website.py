@@ -3,11 +3,17 @@
 from socketserver import ThreadingTCPServer
 from http.server import BaseHTTPRequestHandler
 from os import getenv
+import json
 
 HOST = ""
 PORT = int(getenv("PORT", "80"))
 
-TEMPLATE_FILE = "template.html"
+GRID = {}
+def makeDefaultGrid():
+    size = int(getenv("DEFAULT_GRID_SIZE", "100"))
+    GRID['width'], GRID['height'] = (size, size)
+    GRID['data'] = [i for i in range(size*size)]
+    GRID['dude']=[0,0]
 
 def read_file(file_name):
     with open("page/"+file_name, "r") as file_handle:
@@ -20,7 +26,7 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200, 'OK')
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(read_file(TEMPLATE_FILE).format(read_file(content_name)).encode('utf-8'))
+        self.wfile.write(read_file("template.html").format(read_file(content_name)).encode('utf-8'))
 
     def output_resource(self, name, content_type):
         self.send_response(200, 'OK')
@@ -43,8 +49,17 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
             self.output_resource("gridScript.js", 'application/javascript')
         elif self.path == "/style.css":
             self.output_resource("style.css", 'text/css')
+        elif self.path == "/grid.json":
+            self.output_gridData_json()
         else:
             self.output_404()
+
+    def output_gridData_json(self):
+        self.send_response(200, 'OK')
+        self.send_header('Content-type', 'application/json')
+        if 'data' not in GRID:
+            makeDefaultGrid()
+        self.wfile.write(json.dumps(GRID).encode('utf-8'))
 
 with ThreadingTCPServer((HOST, PORT), GridDudeRequestHandler) as httpd:
     print("Serving Grid Dude on port", PORT)
