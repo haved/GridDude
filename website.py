@@ -90,7 +90,7 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
 
     def update_grid(self):
         length = int(self.headers['Content-length'])
-        update = self.rfile.read(length).decode('utf-8').trim()
+        update = self.rfile.read(length).decode('utf-8').strip()
 
         if False in [c in MOVE_CODES for c in update]:
             self.send_response(400)
