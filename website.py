@@ -23,16 +23,12 @@ def getGridIndex(x, y):
     width = GRID['width']
     return x+y*width
 
-def gridWithDudeIndex():
-    dude = GRID['dude']
-    GRID['dudeIndex'] = getGridIndex(*dude)
-    return GRID
-
 def makeDefaultGrid():
     size = int(getenv("DEFAULT_GRID_SIZE", "100"))
     GRID['width'], GRID['height'] = (size, size)
     GRID['data'] = [0 for _ in range(size*size)]
-    GRID['dude']=[size//2, size//2]
+    GRID['dude'] = [size//2, size//2]
+    GRID['dudeIndex'] = getGridIndex(*GRID['dude'])
 
 def read_file(file_name):
     with open("page/"+file_name, "r") as file_handle:
@@ -64,7 +60,7 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        self.protocol_version='HTTP/1.1'
+        self.protocol_version = 'HTTP/1.1'
         if self.path == "/" or self.path == "/index.html":
             self.output_page("grid.html")
         elif self.path == "/about.html":
@@ -88,7 +84,7 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         try:
             if 'data' not in GRID:
                 makeDefaultGrid()
-            self.wfile.write(json.dumps(gridWithDudeIndex()).encode('utf-8'))
+            self.wfile.write(json.dumps(GRID).encode('utf-8'))
         finally:
             GRID_LOCK.release()
 
@@ -112,14 +108,15 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
             makeDefaultGrid()
         try:
             for code in update:
+                GRID['data'][GRID['dudeIndex']] += 1
                 move = MOVE_CODES[code]
                 new_dude_x = GRID['dude'][0] + move[0]
                 new_dude_y = GRID['dude'][1] + move[1]
                 new_dude_x %= GRID['width']
                 new_dude_y %= GRID['height']
-                index = getGridIndex(new_dude_x, new_dude_y)
+                new_index = getGridIndex(new_dude_x, new_dude_y)
                 GRID['dude'] = [new_dude_x, new_dude_y]
-                GRID['data'][index] += 1
+                GRID['dudeIndex'] = new_index
         finally:
             GRID_LOCK.release()
 

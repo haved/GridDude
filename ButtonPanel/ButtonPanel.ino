@@ -59,7 +59,7 @@ void eatOK() { eatUntil("OK\r\n", 10); }
 
 void connectToWifi() {
   debugSerial.print("Connecting to wifi: ");
-  Serial.setTimeout(1000);
+  wifiSerial.setTimeout(1000);
   wifiSerial.println("AT"); //Just to get an OK
   eatOK();
   wifiSerial.println("AT+RST"); //Reset
@@ -74,11 +74,11 @@ void connectToWifi() {
   wifiSerial.print(WIFI_PASSWD);
   wifiSerial.println("\"");
 
-  Serial.setTimeout(10000);
+  wifiSerial.setTimeout(10000);
   eatUntil("WIFI CONNECTED\r\n", 3);
   eatUntil("WIFI GOT IP\r\n", 4);
   eatUntil("OK\r\n", 5);
-  Serial.setTimeout(1000);
+  wifiSerial.setTimeout(1000);
   
   debugSerial.println("Connected to WiFi");
 }
@@ -133,7 +133,6 @@ void uploadPresses() {
   wifiSerial.print("\r\n");
   wifiSerial.print("\r\n");
   wifiSerial.write(&presses[0], pressedCount);
-  eatUntil("success\r\n", 20);
   endTCP();
   pressedCount = 0;
   turnLED(false);
