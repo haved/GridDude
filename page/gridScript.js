@@ -61,10 +61,14 @@ function drawGrid(ctx) {
 		for(let x = 0; x < gridWidth; x++) {
 			for(let y = 0; y < gridHeight; y++) {
 				const index = x+y*gridWidth;
-				const data = grid['data'][index];
-				const color = data > 0 ? (data/highestGridVal*0.8)+0.2 : 0.0;
+				if(grid['dudeIndex'] == index) {
+					ctx.fillStyle = "#FF1744";
+				} else {
+					const data = grid['data'][index];
+					const color = data > 0 ? (data/highestGridVal*0.8)+0.2 : 0.0;
+					ctx.fillStyle = `rgba(${0x45}, ${0x27}, ${0xA0}, ${color})`;
+				}
 
-				ctx.fillStyle = `rgba(${0x45}, ${0x27}, ${0xA0}, ${color})`;
 				ctx.fillRect(canvasWidth/gridWidth*x, canvasHeight/gridHeight*y, canvasWidth/gridWidth, canvasHeight/gridHeight);
 			}
 		}

@@ -15,7 +15,7 @@ html, body {
 	align-items: center;
 }
 
-@media(min-width: 50rem) {
+@media(min-width: 70rem) {
 	.wholePage {
 		width: 60%;
 	}

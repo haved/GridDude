@@ -4,16 +4,35 @@ from socketserver import ThreadingTCPServer
 from http.server import BaseHTTPRequestHandler
 from os import getenv
 import json
+import threading
 
 HOST = ""
 PORT = int(getenv("PORT", "80"))
 
+MOVE_CODES = {
+    'U': [0, -1],
+    'D': [0, 1],
+    'L': [-1, 0],
+    'R': [1, 0],
+}
+
+GRID_LOCK = threading.Lock()
 GRID = {}
+
+def getGridIndex(x, y):
+    width = GRID['width']
+    return x+y*width
+
+def gridWithDudeIndex():
+    dude = GRID['dude']
+    GRID['dudeIndex'] = getGridIndex(*dude)
+    return GRID
+
 def makeDefaultGrid():
     size = int(getenv("DEFAULT_GRID_SIZE", "100"))
     GRID['width'], GRID['height'] = (size, size)
-    GRID['data'] = [i for i in range(size*size)]
-    GRID['dude']=[size//2,size//2]
+    GRID['data'] = [0 for _ in range(size*size)]
+    GRID['dude']=[size//2, size//2]
 
 def read_file(file_name):
     with open("page/"+file_name, "r") as file_handle:
@@ -65,14 +84,39 @@ class GridDudeRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200, 'OK')
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        if 'data' not in GRID:
-            makeDefaultGrid()
-        self.wfile.write(json.dumps(GRID).encode('utf-8'))
+        GRID_LOCK.acquire()
+        try:
+            if 'data' not in GRID:
+                makeDefaultGrid()
+            self.wfile.write(json.dumps(gridWithDudeIndex()).encode('utf-8'))
+        finally:
+            GRID_LOCK.release()
 
     def update_grid(self):
-        self.send_response(200, 'OK')
-        self.send_header('Content-type', '')
+        update = self.rfile.read()
 
+        self.send_header('Content-type', 'text/plain')
+        if False in [c in MOVE_CODES for c in update]:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write("Bad data".encode('utf-8'))
+            return
+
+        self.send_response(200, 'OK')
+        self.end_headers()
+        self.wfile.write("success".encode('utf-8'))
+
+        GRID_LOCK.acquire()
+        try:
+            for code in update:
+                move = MOVE_CODES[code]
+                new_dude_x = GRID['dude'][0] + move[0]
+                new_dude_y = GRID['dude'][1] + move[1]
+                index = getGridIndex(new_dude_x, new_dude_y)
+                GRID['dude'] = [new_dude_x, new_dude_y]
+                GRID['data'][index] += 1
+        finally:
+            GRID_LOCK.release()
 
     def do_POST(self):
         self.protocol_version='HTTP/1.1'
