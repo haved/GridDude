@@ -121,34 +121,28 @@ void connectToWifi() {
   debugOut.println("Connected to WiFi");
 }
 
-const int timeBetweenChecks = 20;
-void collectButtonsFor(int mil) {
-  while(mil > 0) {
-    static bool prevUp = false, prevDown = false, prevLeft = false, prevRight = false;
-    bool up = digitalRead(UP), down = digitalRead(DOWN), left = digitalRead(LEFT), right = digitalRead(RIGHT);
+void collectButtonsSnapshot() {
+  static bool prevUp = false, prevDown = false, prevLeft = false, prevRight = false;
+  bool up = digitalRead(UP), down = digitalRead(DOWN), left = digitalRead(LEFT), right = digitalRead(RIGHT);
 
-    if(up && !prevUp) {
-      presses[pressedEnd++] = 'U';
-      pressedEnd%=pressBufferSize;
-    }
-    if(down && !prevDown) {
-      presses[pressedEnd++] = 'D';
-      pressedEnd%=pressBufferSize;
-    }
-    if(left && !prevLeft) {
-      presses[pressedEnd++] = 'L';
-      pressedEnd%=pressBufferSize;
-    }
-    if(right && !prevRight) {
-      presses[pressedEnd++] = 'R';
-      pressedEnd%=pressBufferSize;
-    }
-    
-    prevUp = up; prevDown = down; prevLeft = left; prevRight = right;
-
-    delay(timeBetweenChecks);
-    mil-=timeBetweenChecks;
+  if(up && !prevUp) {
+    presses[pressedEnd++] = 'U';
+    pressedEnd%=pressBufferSize;
   }
+  if(down && !prevDown) {
+    presses[pressedEnd++] = 'D';
+    pressedEnd%=pressBufferSize;
+  }
+  if(left && !prevLeft) {
+    presses[pressedEnd++] = 'L';
+    pressedEnd%=pressBufferSize;
+  }
+  if(right && !prevRight) {
+    presses[pressedEnd++] = 'R';
+    pressedEnd%=pressBufferSize;
+  }
+  
+  prevUp = up; prevDown = down; prevLeft = left; prevRight = right;
 }
 
 void collectButtonsUntil(String text, int timeout, int errorCode) {
@@ -156,7 +150,7 @@ void collectButtonsUntil(String text, int timeout, int errorCode) {
   while(millis() < keepTryingUntil) {
      if(wifiIn.find(&text[0]))
         return;
-     collectButtonsFor(1);
+     collectButtonsSnapshot();
   }
   debugOut.print("Timed out waiting on: ");
   debugOut.println(text);
@@ -175,14 +169,14 @@ void sendTCP(String server, int port, int byteCount) {
   collectButtonsUntil("OK\r\n", 6000, 11);
 }
 
+const int timeBetweenChecks = 20;
+
 const String POST_str = "POST /update_grid HTTP/1.1\r\n";
 const String HOST_str = "Host: "+SERVER+"\r\n";
 const String CON_LEN_str = "Content-length: ";
 void uploadPresses() {
   debugOut.println("Starting upload");
-  wifiIn.setTimeout(10); //We need SOME timeout, e.g. 1 doesn't work, but we want to sped time looking for button presses.
-  //The buffer is 64 bytes big, and I do fear you can override the SEND OK before you ask for it.
-  //Maybe only ask for success, as less than 64-9 bytes come after
+  wifiIn.setTimeout(timeBetweenChecks);
   turnLED(true);
 
   int ps = pressedStart;
@@ -218,7 +212,8 @@ void uploadPresses() {
 }
 
 void loop() {
-  collectButtonsFor(1);
+  collectButtonsSnapshot();
+  delay(timeBetweenChecks);
   
   static unsigned long noPressesLastTime=millis();
   if(pressedStart == pressedEnd) {
